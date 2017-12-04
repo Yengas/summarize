@@ -2,8 +2,8 @@ package edu.yengas.ozet;
 
 import akka.NotUsed;
 import akka.actor.ActorSystem;
-import akka.stream.ActorMaterializer;
-import akka.stream.Materializer;
+import akka.japi.function.Function;
+import akka.stream.*;
 import akka.stream.javadsl.Flow;
 import akka.stream.javadsl.Sink;
 import edu.yengas.ozet.identify.Identifier;
@@ -11,6 +11,9 @@ import edu.yengas.ozet.identify.ZemberekLanguageIdentifier;
 import edu.yengas.ozet.models.SentenceWithRoots;
 import edu.yengas.ozet.readers.CorpusReader;
 import edu.yengas.ozet.readers.FileCorpusReader;
+import edu.yengas.ozet.summarizers.MeadSummarization;
+import edu.yengas.ozet.summarizers.MeadSummarization2;
+import edu.yengas.ozet.summarizers.Summarization;
 import edu.yengas.ozet.tokenize.TokenizerAndStemmerFactory;
 import edu.yengas.ozet.tokenize.ZemberekTokenizerAndStemmerFactory;
 import zemberek.langid.Language;
@@ -25,16 +28,25 @@ public class Main {
         return Language.getByName(id.identify(content, max));
     }
 
+
     public static void main(String[] args) throws Exception{
         final ActorSystem system = ActorSystem.create("QuickStart");
-        final Materializer materializer = ActorMaterializer.create(system);
+        final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system)
+                .withSupervisionStrategy(new Function<Throwable, Supervision.Directive>() {
+                    @Override
+                    public Supervision.Directive apply(Throwable param) throws Exception {
+                        param.printStackTrace();
+                        return Supervision.stop();
+                    }
+                });
+        final Materializer materializer = ActorMaterializer.create(settings, system);
 
         Flow<List<SentenceWithRoots>, List<SentenceWithRoots>, NotUsed> printer = Flow.fromFunction((param) -> {
             System.out.println("Total sentence count for corpus: " + param.size());
 
             for(SentenceWithRoots swr : param){
                 System.out.println(swr.sentence);
-                for(String root : swr.roots) System.out.print(root + ", ");
+                for(String root : swr.roots) System.out.print("\"" + root + "\"" + ", ");
                 System.out.println("\n---------");
             }
 
@@ -46,15 +58,19 @@ public class Main {
         Identifier identifier = new ZemberekLanguageIdentifier(identifierModel);
         // Create TokenizerAndStemmerFactory instance to be used
         TokenizerAndStemmerFactory tsFactory = new ZemberekTokenizerAndStemmerFactory();
+        // Create summarization instance to be used
+        Summarization summarization = new MeadSummarization();
 
         // Read the configuration,
         // Parse the configuration into classes
         // Create the pipeline with the read configurations.
         CorpusReader reader = new FileCorpusReader(Paths.get("/home/yengas/Workspace/KYCUBYO/MakaleOzet/src/main/resources/corpus.txt"));
 
+
         reader.createReader()
                 .via(Streams.createCorpusLanguageDetectionStream(identifier))
                 .via(Streams.corpusSentenceWithRootsParser(tsFactory))
+                .via(Streams.summarizeStream(summarization, 10))
                 .via(printer)
                 .to(Sink.ignore())
                 .run(materializer);
