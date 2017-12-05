@@ -5,6 +5,32 @@ apply plugin: 'java'
 
 sourceCompatibility = 1.8
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.0'
+    }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+shadowJar {
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.AppendingTransformer) {
+        resource = 'reference.conf'
+    }
+}
+
+// Add the MainClass attribute to the jar file.
+jar{
+    manifest{
+        attributes(
+            'Main-Class': 'edu.yengas.ozet.Main',
+        )
+    }
+}
+
 repositories {
     mavenCentral()
     maven{
