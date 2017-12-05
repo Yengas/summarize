@@ -131,10 +131,10 @@ public class MeadSummarizationAlgorithm {
     public double calculateSentenceCentroid(List<String> sentence, Set<String> topWords){
         double value = 0;
 
-        for(String word : sentence){
+        // For each word, make sure we only include it once.
+        for(String word : new HashSet<String>(sentence)){
             if(topWords.contains(word))
                 value += model.getCentroidValueForWord(word);
-
         }
 
         return value;
