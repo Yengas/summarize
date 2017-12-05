@@ -11,6 +11,7 @@ import edu.yengas.ozet.identify.ZemberekLanguageIdentifier;
 import edu.yengas.ozet.models.SentenceWithRoots;
 import edu.yengas.ozet.readers.CorpusReader;
 import edu.yengas.ozet.readers.FileCorpusReader;
+import edu.yengas.ozet.readers.InputStreamCorpusReader;
 import edu.yengas.ozet.summarizers.MeadSummarization;
 import edu.yengas.ozet.summarizers.MeadSummarization2;
 import edu.yengas.ozet.summarizers.Summarization;
@@ -19,6 +20,8 @@ import edu.yengas.ozet.tokenize.ZemberekTokenizerAndStemmerFactory;
 import zemberek.langid.Language;
 import zemberek.langid.LanguageIdentifier;
 
+import java.io.File;
+import java.net.URI;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -64,7 +67,8 @@ public class Main {
         // Read the configuration,
         // Parse the configuration into classes
         // Create the pipeline with the read configurations.
-        CorpusReader reader = new FileCorpusReader(Paths.get("/home/yengas/Workspace/KYCUBYO/MakaleOzet/src/main/resources/corpus.txt"));
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        CorpusReader reader = new InputStreamCorpusReader(() -> loader.getResourceAsStream("corpus.txt"));
 
 
         reader.createReader()
