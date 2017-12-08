@@ -74,9 +74,9 @@ public class Main {
                 .via(Streams.corpusSentenceWithRootsParser(tsFactory))
                 .via(Streams.summarizeStream(summarization, 10))
                 .via(printer)
+                .watchTermination((mat, done) -> done.whenComplete((__, ___) -> system.terminate()))
                 .to(Sink.ignore())
                 .run(materializer);
-
 
         // Pipeline:
         // Read the corpus
