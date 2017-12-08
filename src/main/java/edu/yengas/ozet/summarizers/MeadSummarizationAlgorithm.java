@@ -24,12 +24,21 @@ public class MeadSummarizationAlgorithm {
         }
 
         /**
+         * Returns on average how many times this word is used in a single document.
+         * @param documentCount
+         * @return
+         */
+        public double averageFrequency(int documentCount){
+            return termFrequency / (double) documentCount;
+        }
+
+        /**
          * Returns the centroid value for the given frequencies in the given corpus.
          * @param documentCount the total number of sentences in the corpus.
          * @return
          */
         public double centroidValue(int documentCount){
-            return (termFrequency /  (double)documentCount) * Math.log10(documentCount / ((double) documentFrequency));
+            return averageFrequency(documentCount) * Math.log10(documentCount / ((double) documentFrequency));
         }
 
         @Override
@@ -95,11 +104,14 @@ public class MeadSummarizationAlgorithm {
         }
 
         for(List<String> sentence : sentences){
-            for(String word : new HashSet<String>(sentence)){
+            HashSet<String> set = new HashSet<String>();
+
+            for(String word : sentence){
                 Frequency freq = m.frequencies.getOrDefault(word, new Frequency(0, 0));
 
                 freq.termFrequency += 1;
-                freq.documentFrequency += 1;
+                if(set.add(word))
+                    freq.documentFrequency += 1;
                 m.frequencies.put(word, freq);
             }
         }
@@ -117,7 +129,10 @@ public class MeadSummarizationAlgorithm {
 
         return model.frequencies.keySet()
                 .stream()
-                .sorted(Comparator.comparing(model::getCentroidValueForWord).reversed())
+                .sorted(
+                        Comparator.comparing(model::getCentroidValueForWord).reversed()
+                                .thenComparing(Comparator.reverseOrder())
+                )
                 .limit(size)
                 .collect(Collectors.toSet());
     }
@@ -149,24 +164,6 @@ public class MeadSummarizationAlgorithm {
         return ((numSentences - position) / (double)numSentences) * maxCentroidValue;
     }
 
-    /**
-     * For each word in the sentence, returns their frequency in the same sentence
-     * @param sentence
-     * @return
-     */
-    public List<Integer> sentenceVector(List<String> sentence){
-        return sentence.stream().map(word -> Collections.frequency(sentence, word)).collect(Collectors.toList());
-    }
-
-    private static int innerProduct(List<Integer> left, List<Integer> right){
-        int total = 0;
-
-        for(int i = 0; i < Math.min(left.size(), right.size()); i++)
-            total += left.get(i) * right.get(i);
-
-        return total;
-    }
-
     private class IndexWithValue implements Comparable<IndexWithValue>{
         public final int id;
         public final double value;
@@ -186,6 +183,37 @@ public class MeadSummarizationAlgorithm {
         }
     }
 
+    /**
+     * Returns the overlap value for the given sentence with the first sentence.
+     * @param firstSentenceVector the term occurrences of the first sentence.
+     * @param sentence the sentence to check against first sentence.
+     * @return
+     */
+    private static int getOverlapsOfSentence(Map<String, Integer> firstSentenceVector, List<String> sentence){
+        int overlaps = 0;
+
+        for(String word : sentence)
+            overlaps += firstSentenceVector.getOrDefault(word, 0);
+
+        return overlaps;
+    }
+
+
+    /**
+     * Creates a term occurrence map for the given sentence.
+     * @param sentence
+     * @return
+     */
+    private static Map<String, Integer> createWordOccurrenceMap(List<String> sentence){
+        HashMap<String, Integer> result = new HashMap<String, Integer>();
+
+        for(String word : sentence){
+            result.put(word, result.getOrDefault(word, 0) + 1);
+        }
+
+        return result;
+    }
+
     public List<Integer> summarizeSentences(List<List<String>> sentences, double percentage) {
         // How many sentences to select and return
         int countToSelect = (int) Math.min(Math.max(1, sentences.size() * percentage / 100), sentences.size());
@@ -193,7 +221,7 @@ public class MeadSummarizationAlgorithm {
         Set<String> topTenPercent = topWords(10);
         List<Double> centroidValues = sentences.stream().map(s -> calculateSentenceCentroid(s, topTenPercent)).collect(Collectors.toList());
         double centroidMaxValue = Collections.max(centroidValues);
-        List<Integer> firstSentenceVector = sentenceVector(sentences.get(0));
+        Map<String, Integer> firstSentenceVector = createWordOccurrenceMap(sentences.get(0));
 
         return IntStream.range(0, sentences.size()).boxed()
                 .map(idx -> {
@@ -202,7 +230,7 @@ public class MeadSummarizationAlgorithm {
                     // Get positional value, relative to the sentence position and cmax value
                     double pv = positionalValue(idx, sentences.size(), centroidMaxValue);
                     // Get overlaps value with the first sentence of the document
-                    double so = innerProduct(firstSentenceVector, sentenceVector(sentences.get(idx)));
+                    double so = getOverlapsOfSentence(firstSentenceVector, sentences.get(idx));
 
                     return new IndexWithValue(idx, cv + pv + so);
                 })
