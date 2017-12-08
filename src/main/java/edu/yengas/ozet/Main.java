@@ -3,26 +3,24 @@ package edu.yengas.ozet;
 import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.japi.function.Function;
-import akka.stream.*;
+import akka.stream.ActorMaterializer;
+import akka.stream.ActorMaterializerSettings;
+import akka.stream.Materializer;
+import akka.stream.Supervision;
 import akka.stream.javadsl.Flow;
 import akka.stream.javadsl.Sink;
 import edu.yengas.ozet.identify.Identifier;
 import edu.yengas.ozet.identify.ZemberekLanguageIdentifier;
 import edu.yengas.ozet.models.SentenceWithRoots;
 import edu.yengas.ozet.readers.CorpusReader;
-import edu.yengas.ozet.readers.FileCorpusReader;
 import edu.yengas.ozet.readers.InputStreamCorpusReader;
 import edu.yengas.ozet.summarizers.MeadSummarization;
-import edu.yengas.ozet.summarizers.MeadSummarization2;
 import edu.yengas.ozet.summarizers.Summarization;
 import edu.yengas.ozet.tokenize.TokenizerAndStemmerFactory;
 import edu.yengas.ozet.tokenize.ZemberekTokenizerAndStemmerFactory;
 import zemberek.langid.Language;
 import zemberek.langid.LanguageIdentifier;
 
-import java.io.File;
-import java.net.URI;
-import java.nio.file.Paths;
 import java.util.List;
 
 public class Main {
