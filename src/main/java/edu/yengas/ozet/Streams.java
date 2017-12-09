@@ -7,6 +7,7 @@ import edu.yengas.ozet.identify.Identifier;
 import edu.yengas.ozet.models.Corpus;
 import edu.yengas.ozet.models.CorpusWithLanguage;
 import edu.yengas.ozet.models.SentenceWithRoots;
+import edu.yengas.ozet.models.Summary;
 import edu.yengas.ozet.summarizers.Summarization;
 import edu.yengas.ozet.tokenize.StemmerAndTokenizerForLanguage;
 import edu.yengas.ozet.tokenize.TokenizerAndStemmerFactory;
@@ -70,14 +71,14 @@ public class Streams {
      * @param summarization the summarization algorithm instance to be used.
      * @return
      */
-    public static Flow<List<SentenceWithRoots>, List<SentenceWithRoots>, NotUsed> summarizeStream(Summarization summarization, int percentage){
+    public static Flow<List<SentenceWithRoots>, Summary, NotUsed> summarizeStream(Summarization summarization, int percentage){
         return Flow.fromFunction(sentencesWithRoots -> {
             List<List<String>> asSentenceList = sentencesWithRoots.stream().map(swr -> swr.roots).collect(Collectors.toList());
 
-            return summarization.summarizeSentences(
+            return new Summary(summarization.summarizeSentences(
                     asSentenceList,
                     percentage
-            ).stream().map(sentencesWithRoots::get).collect(Collectors.toList());
+            ).stream().map(sentencesWithRoots::get).collect(Collectors.toList()));
         });
     }
 }

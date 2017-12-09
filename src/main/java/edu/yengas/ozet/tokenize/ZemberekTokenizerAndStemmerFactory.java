@@ -4,11 +4,17 @@ import edu.yengas.ozet.models.CorpusLanguage;
 import zemberek.morphology.analysis.tr.TurkishMorphology;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ZemberekTokenizerAndStemmerFactory implements TokenizerAndStemmerFactory {
     private static TurkishMorphology morphology = null;
 
     private static TurkishMorphology getTurkishMorphology() throws IOException {
+        // TODO: this seems hackish, convert to using properties file or something else.
+        Logger logger = Logger.getLogger("zemberek-logger");
+        if(logger != null) logger.setLevel(Level.OFF);
+
         if(morphology != null) return morphology;
         return morphology = TurkishMorphology.createWithDefaults();
     }

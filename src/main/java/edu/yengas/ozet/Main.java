@@ -18,6 +18,8 @@ import edu.yengas.ozet.summarizers.MeadSummarization;
 import edu.yengas.ozet.summarizers.Summarization;
 import edu.yengas.ozet.tokenize.TokenizerAndStemmerFactory;
 import edu.yengas.ozet.tokenize.ZemberekTokenizerAndStemmerFactory;
+import edu.yengas.ozet.writers.DebugSummaryWriter;
+import edu.yengas.ozet.writers.SummaryWriter;
 import zemberek.langid.Language;
 import zemberek.langid.LanguageIdentifier;
 
@@ -67,15 +69,16 @@ public class Main {
         // Create the pipeline with the read configurations.
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         CorpusReader reader = new InputStreamCorpusReader(() -> loader.getResourceAsStream("corpus.txt"));
+        // Summary
+        SummaryWriter writer = new DebugSummaryWriter(System.out);
 
 
         reader.createReader()
                 .via(Streams.createCorpusLanguageDetectionStream(identifier))
                 .via(Streams.corpusSentenceWithRootsParser(tsFactory))
                 .via(Streams.summarizeStream(summarization, 10))
-                .via(printer)
                 .watchTermination((mat, done) -> done.whenComplete((__, ___) -> system.terminate()))
-                .to(Sink.ignore())
+                .to(writer.createWriter())
                 .run(materializer);
 
         // Pipeline:
