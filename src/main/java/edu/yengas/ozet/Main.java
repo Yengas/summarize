@@ -13,6 +13,7 @@ import edu.yengas.ozet.identify.Identifier;
 import edu.yengas.ozet.identify.ZemberekLanguageIdentifier;
 import edu.yengas.ozet.models.SentenceWithRoots;
 import edu.yengas.ozet.readers.CorpusReader;
+import edu.yengas.ozet.readers.HTTPCorpusReader;
 import edu.yengas.ozet.readers.InputStreamCorpusReader;
 import edu.yengas.ozet.summarizers.MeadSummarization;
 import edu.yengas.ozet.summarizers.Summarization;
@@ -33,7 +34,7 @@ public class Main {
 
 
     public static void main(String[] args) throws Exception{
-        final ActorSystem system = ActorSystem.create("QuickStart");
+        final ActorSystem system = ActorSystem.create("Summarize");
         final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system)
                 .withSupervisionStrategy(new Function<Throwable, Supervision.Directive>() {
                     @Override
@@ -43,18 +44,6 @@ public class Main {
                     }
                 });
         final Materializer materializer = ActorMaterializer.create(settings, system);
-
-        Flow<List<SentenceWithRoots>, List<SentenceWithRoots>, NotUsed> printer = Flow.fromFunction((param) -> {
-            System.out.println("Total sentence count for corpus: " + param.size());
-
-            for(SentenceWithRoots swr : param){
-                System.out.println(swr.sentence);
-                for(String root : swr.roots) System.out.print("\"" + root + "\"" + ", ");
-                System.out.println("\n---------");
-            }
-
-            return param;
-        });
 
         // Language identification classes, maybe removed in case no auto detection of languages.
         LanguageIdentifier identifierModel = LanguageIdentifier.fromInternalModels();
@@ -68,7 +57,8 @@ public class Main {
         // Parse the configuration into classes
         // Create the pipeline with the read configurations.
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        CorpusReader reader = new InputStreamCorpusReader(() -> loader.getResourceAsStream("corpus.txt"));
+        //CorpusReader reader = new InputStreamCorpusReader(() -> loader.getResourceAsStream("corpus.txt"));
+        CorpusReader reader = new HTTPCorpusReader(new HTTPCorpusReader.Options("https://www.reddit.com/r/TurkRedPill/comments/5u13vz/adam_olma_yolunda_kendi_gerçekliğini_yaratmak/", "#form-t3_5u13vzgf4 > div > div"), system.dispatcher());
         // Summary
         SummaryWriter writer = new DebugSummaryWriter(System.out);
 
