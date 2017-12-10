@@ -10,10 +10,10 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.List;
 
-public class DebugSummaryWriter implements SummaryWriter{
+public class LineSummaryWriter implements SummaryWriter{
     private BufferedWriter bufferedWriter;
 
-    public DebugSummaryWriter(OutputStream outputStream){
+    public LineSummaryWriter(OutputStream outputStream){
         this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
     }
 

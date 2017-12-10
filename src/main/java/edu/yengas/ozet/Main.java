@@ -1,30 +1,24 @@
 package edu.yengas.ozet;
 
-import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.japi.function.Function;
 import akka.stream.ActorMaterializer;
 import akka.stream.ActorMaterializerSettings;
 import akka.stream.Materializer;
 import akka.stream.Supervision;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Sink;
 import edu.yengas.ozet.identify.Identifier;
 import edu.yengas.ozet.identify.ZemberekLanguageIdentifier;
-import edu.yengas.ozet.models.SentenceWithRoots;
 import edu.yengas.ozet.readers.CorpusReader;
-import edu.yengas.ozet.readers.HTTPCorpusReader;
 import edu.yengas.ozet.readers.InputStreamCorpusReader;
 import edu.yengas.ozet.summarizers.MeadSummarization;
 import edu.yengas.ozet.summarizers.Summarization;
 import edu.yengas.ozet.tokenize.TokenizerAndStemmerFactory;
 import edu.yengas.ozet.tokenize.ZemberekTokenizerAndStemmerFactory;
-import edu.yengas.ozet.writers.DebugSummaryWriter;
+import edu.yengas.ozet.writers.JsonSummaryWriter;
+import edu.yengas.ozet.writers.LineSummaryWriter;
 import edu.yengas.ozet.writers.SummaryWriter;
 import zemberek.langid.Language;
 import zemberek.langid.LanguageIdentifier;
-
-import java.util.List;
 
 public class Main {
 
@@ -34,6 +28,12 @@ public class Main {
 
 
     public static void main(String[] args) throws Exception{
+        // Configuration options,
+        // Summarization percentage -- count name: --summarySize -ss 10 10%
+        // Multiple sources: file, remote
+        //    -- For http: url, cssQuery --http-source -hs
+        //    -- For file: path          --file-source -fs
+        // Output type: lines, json --output-format -of
         final ActorSystem system = ActorSystem.create("Summarize");
         final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system)
                 .withSupervisionStrategy(new Function<Throwable, Supervision.Directive>() {
@@ -57,10 +57,10 @@ public class Main {
         // Parse the configuration into classes
         // Create the pipeline with the read configurations.
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        //CorpusReader reader = new InputStreamCorpusReader(() -> loader.getResourceAsStream("corpus.txt"));
-        CorpusReader reader = new HTTPCorpusReader(new HTTPCorpusReader.Options("https://www.reddit.com/r/TurkRedPill/comments/5u13vz/adam_olma_yolunda_kendi_gerçekliğini_yaratmak/", "#form-t3_5u13vzgf4 > div > div"), system.dispatcher());
+        CorpusReader reader = new InputStreamCorpusReader(() -> loader.getResourceAsStream("corpus.txt"));
+
         // Summary
-        SummaryWriter writer = new DebugSummaryWriter(System.out);
+        SummaryWriter writer = new JsonSummaryWriter(System.out);
 
 
         reader.createReader()
@@ -70,10 +70,5 @@ public class Main {
                 .watchTermination((mat, done) -> done.whenComplete((__, ___) -> system.terminate()))
                 .to(writer.createWriter())
                 .run(materializer);
-
-        // Pipeline:
-        // Read the corpus
-        // Summarize
-        // Output
     }
 }

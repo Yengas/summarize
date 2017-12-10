@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class MeadSummarization implements Summarization {
     @Override
-    public List<Integer> summarizeSentences(List<List<String>> sentences, double percentage) {
-        return new MeadSummarizationAlgorithm().updateModel(sentences).summarizeSentences(sentences, percentage);
+    public List<Integer> summarizeSentences(List<List<String>> sentences, int count) {
+        return new MeadSummarizationAlgorithm().updateModel(sentences).summarizeSentences(sentences, count);
     }
 }

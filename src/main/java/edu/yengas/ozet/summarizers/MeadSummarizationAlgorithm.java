@@ -214,9 +214,7 @@ public class MeadSummarizationAlgorithm {
         return result;
     }
 
-    public List<Integer> summarizeSentences(List<List<String>> sentences, double percentage) {
-        // How many sentences to select and return
-        int countToSelect = (int) Math.min(Math.max(1, sentences.size() * percentage / 100), sentences.size());
+    public List<Integer> summarizeSentences(List<List<String>> sentences, int countToSelect) {
         // Top 10 percent of the words in the document
         Set<String> topTenPercent = topWords(10);
         List<Double> centroidValues = sentences.stream().map(s -> calculateSentenceCentroid(s, topTenPercent)).collect(Collectors.toList());

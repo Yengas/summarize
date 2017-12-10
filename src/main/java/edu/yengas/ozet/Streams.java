@@ -71,13 +71,13 @@ public class Streams {
      * @param summarization the summarization algorithm instance to be used.
      * @return
      */
-    public static Flow<List<SentenceWithRoots>, Summary, NotUsed> summarizeStream(Summarization summarization, int percentage){
+    public static Flow<List<SentenceWithRoots>, Summary, NotUsed> summarizeStream(Summarization summarization, int count){
         return Flow.fromFunction(sentencesWithRoots -> {
             List<List<String>> asSentenceList = sentencesWithRoots.stream().map(swr -> swr.roots).collect(Collectors.toList());
 
             return new Summary(summarization.summarizeSentences(
                     asSentenceList,
-                    percentage
+                    count
             ).stream().map(sentencesWithRoots::get).collect(Collectors.toList()));
         });
     }
